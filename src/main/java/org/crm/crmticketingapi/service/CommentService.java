@@ -20,4 +20,9 @@ public interface CommentService {
     void deleteComment(
             Long id
     );
+
+    Comment updateComment(
+            Long id,
+            CreateCommentRequest request
+    );
 }

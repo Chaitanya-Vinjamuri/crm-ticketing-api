@@ -20,4 +20,9 @@ public interface TicketService {
     void deleteTicket(
             Long id
     );
+
+    Ticket updateTicket(
+            Long id,
+            CreateTicketRequest request
+    );
 }

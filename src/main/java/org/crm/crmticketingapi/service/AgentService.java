@@ -20,4 +20,9 @@ public interface AgentService {
     void deleteAgent(
             Long id
     );
+
+    Agent updateAgent(
+            Long id,
+            CreateAgentRequest request
+    );
 }
