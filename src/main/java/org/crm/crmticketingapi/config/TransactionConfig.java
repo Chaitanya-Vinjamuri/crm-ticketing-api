@@ -5,6 +5,7 @@ package org.crm.crmticketingapi.config;
 import org.hibernate.SessionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class TransactionConfig {
 
     @Bean
+    @Primary
     public HibernateTransactionManager transactionManager(
             SessionFactory sessionFactory) {
 
