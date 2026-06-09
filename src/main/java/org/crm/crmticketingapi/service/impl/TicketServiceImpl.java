@@ -7,6 +7,7 @@ import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
+import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class TicketServiceImpl
 
         if (agent == null) {
 
-            throw new RuntimeException(
+            throw new ResourceNotFoundException(
                     "Agent not found with id : "
                             + request.getAgentId()
             );
@@ -71,7 +72,18 @@ public class TicketServiceImpl
     public Ticket getTicketById(
             Long id) {
 
-        return ticketDao.findById(id);
+        Ticket ticket =
+                ticketDao.findById(id);
+
+        if (ticket == null) {
+
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : "
+                            + id
+            );
+        }
+
+        return ticket;
     }
 
     @Override
@@ -83,6 +95,17 @@ public class TicketServiceImpl
     @Override
     public void deleteTicket(
             Long id) {
+
+        Ticket ticket =
+                ticketDao.findById(id);
+
+        if (ticket == null) {
+
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : "
+                            + id
+            );
+        }
 
         ticketDao.delete(id);
     }

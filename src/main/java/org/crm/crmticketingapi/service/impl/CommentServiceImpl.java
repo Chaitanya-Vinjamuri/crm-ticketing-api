@@ -8,6 +8,7 @@ import org.crm.crmticketingapi.dto.request.CreateCommentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.entity.Comment;
 import org.crm.crmticketingapi.entity.Ticket;
+import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,15 +43,17 @@ public class CommentServiceImpl
 
         if (ticket == null) {
 
-            throw new RuntimeException(
-                    "Ticket not found"
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : "
+                            + request.getTicketId()
             );
         }
 
         if (agent == null) {
 
-            throw new RuntimeException(
-                    "Agent not found"
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : "
+                            + request.getAgentId()
             );
         }
 
@@ -71,7 +74,18 @@ public class CommentServiceImpl
     public Comment getCommentById(
             Long id) {
 
-        return commentDao.findById(id);
+        Comment comment =
+                commentDao.findById(id);
+
+        if (comment == null) {
+
+            throw new ResourceNotFoundException(
+                    "Comment not found with id : "
+                            + id
+            );
+        }
+
+        return comment;
     }
 
     @Override
@@ -83,6 +97,17 @@ public class CommentServiceImpl
     @Override
     public void deleteComment(
             Long id) {
+
+        Comment comment =
+                commentDao.findById(id);
+
+        if (comment == null) {
+
+            throw new ResourceNotFoundException(
+                    "Comment not found with id : "
+                            + id
+            );
+        }
 
         commentDao.delete(id);
     }

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dao.AgentDao;
 import org.crm.crmticketingapi.dto.request.CreateAgentRequest;
 import org.crm.crmticketingapi.entity.Agent;
+import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.AgentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,16 @@ public class AgentServiceImpl
     public Agent getAgentById(
             Long id) {
 
-        return agentDao.findById(id);
+        Agent agent =
+                agentDao.findById(id);
+
+        if (agent == null) {
+
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : " + id
+            );
+        }
+        return agent;
     }
 
     @Override
@@ -58,6 +68,13 @@ public class AgentServiceImpl
     public void deleteAgent(
             Long id) {
 
+        Agent ag = agentDao.findById(id);
+        if (ag == null) {
+
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : " + id
+            );
+        }
         agentDao.delete(id);
     }
 }
