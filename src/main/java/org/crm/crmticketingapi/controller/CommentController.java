@@ -1,13 +1,15 @@
 package org.crm.crmticketingapi.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dto.request.CreateCommentRequest;
 import org.crm.crmticketingapi.entity.Comment;
 import org.crm.crmticketingapi.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -20,37 +22,63 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public Comment createComment(
+    public ResponseEntity<Comment> createComment(
             @Valid
             @RequestBody
             CreateCommentRequest request) {
 
-        return commentService.createComment(
-                request
-        );
+        Comment comment =
+                commentService.createComment(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(comment);
     }
 
     @GetMapping("/{id}")
-    public Comment getCommentById(
+    public ResponseEntity<Comment> getCommentById(
             @PathVariable
             Long id) {
 
-        return commentService.getCommentById(
-                id
+        return ResponseEntity.ok(
+                commentService.getCommentById(id)
         );
     }
 
     @GetMapping
-    public List<Comment> getAllComments() {
+    public ResponseEntity<List<Comment>> getAllComments() {
 
-        return commentService.getAllComments();
+        return ResponseEntity.ok(
+                commentService.getAllComments()
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void deleteComment(
+    public ResponseEntity<String> deleteComment(
             @PathVariable
             Long id) {
 
         commentService.deleteComment(id);
+
+        return ResponseEntity.ok(
+                "Comment deleted successfully"
+        );
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Comment> updateComment(
+            @PathVariable
+            Long id,
+
+            @Valid
+            @RequestBody
+            CreateCommentRequest request) {
+
+        return ResponseEntity.ok(
+                commentService.updateComment(
+                        id,
+                        request
+                )
+        );
     }
 }

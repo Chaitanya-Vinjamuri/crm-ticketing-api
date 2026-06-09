@@ -160,4 +160,66 @@ public class TicketServiceImpl
                 id
         );
     }
+
+    @Override
+    public Ticket updateTicket(
+            Long id,
+            CreateTicketRequest request) {
+
+        logger.info(
+                "Updating ticket with id {}",
+                id
+        );
+
+        Ticket ticket =
+                ticketDao.findById(id);
+
+        if (ticket == null) {
+
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : " + id
+            );
+        }
+
+        Agent agent =
+                agentDao.findById(
+                        request.getAgentId()
+                );
+
+        if (agent == null) {
+
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : "
+                            + request.getAgentId()
+            );
+        }
+
+        ticket.setTitle(
+                request.getTitle()
+        );
+
+        ticket.setDescription(
+                request.getDescription()
+        );
+
+        ticket.setCustomerEmail(
+                request.getCustomerEmail()
+        );
+
+        ticket.setPriority(
+                request.getPriority()
+        );
+
+        ticket.setIssueType(
+                request.getIssueType()
+        );
+
+        ticket.setAssignedAgent(
+                agent
+        );
+
+        ticketDao.update(ticket);
+
+        return ticket;
+    }
 }

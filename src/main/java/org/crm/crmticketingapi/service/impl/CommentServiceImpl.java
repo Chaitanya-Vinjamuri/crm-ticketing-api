@@ -172,4 +172,68 @@ public class CommentServiceImpl
                 id
         );
     }
+
+    @Override
+    public Comment updateComment(
+            Long id,
+            CreateCommentRequest request) {
+
+        logger.info(
+                "Updating comment with id {}",
+                id
+        );
+
+        Comment comment =
+                commentDao.findById(id);
+
+        if (comment == null) {
+
+            throw new ResourceNotFoundException(
+                    "Comment not found with id : "
+                            + id
+            );
+        }
+
+        Ticket ticket =
+                ticketDao.findById(
+                        request.getTicketId()
+                );
+
+        Agent agent =
+                agentDao.findById(
+                        request.getAgentId()
+                );
+
+        if (ticket == null) {
+
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : "
+                            + request.getTicketId()
+            );
+        }
+
+        if (agent == null) {
+
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : "
+                            + request.getAgentId()
+            );
+        }
+
+        comment.setMessage(
+                request.getMessage()
+        );
+
+        comment.setTicket(
+                ticket
+        );
+
+        comment.setAgent(
+                agent
+        );
+
+        commentDao.update(comment);
+
+        return comment;
+    }
 }

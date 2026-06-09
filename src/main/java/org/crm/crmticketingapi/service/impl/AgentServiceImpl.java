@@ -119,4 +119,55 @@ public class AgentServiceImpl
                 id
         );
     }
+
+    @Override
+    public Agent updateAgent(
+            Long id,
+            CreateAgentRequest request) {
+
+        logger.info(
+                "Updating agent with id {}",
+                id
+        );
+
+        Agent agent =
+                agentDao.findById(id);
+
+        if (agent == null) {
+
+            logger.warn(
+                    "Agent not found with id {}",
+                    id
+            );
+
+            throw new ResourceNotFoundException(
+                    "Agent not found with id : " + id
+            );
+        }
+
+        agent.setName(
+                request.getName()
+        );
+
+        agent.setEmail(
+                request.getEmail()
+        );
+
+        agent.setDepartment(
+                request.getDepartment()
+        );
+
+        agent.setActive(
+                request.getActive()
+        );
+
+        agentDao.update(agent);
+
+        logger.info(
+                "Agent updated successfully with id {}",
+                id
+        );
+
+        return agent;
+    }
 }
