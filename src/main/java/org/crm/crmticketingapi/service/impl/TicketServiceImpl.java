@@ -9,6 +9,8 @@ import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.TicketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,9 +30,19 @@ public class TicketServiceImpl
 
     private final AgentDao agentDao;
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    TicketServiceImpl.class
+            );
+
     @Override
     public Ticket createTicket(
             CreateTicketRequest request) {
+
+        logger.info(
+                "Creating ticket for agent id {}",
+                request.getAgentId()
+        );
 
         Agent agent =
                 agentDao.findById(
@@ -38,6 +50,11 @@ public class TicketServiceImpl
                 );
 
         if (agent == null) {
+
+            logger.warn(
+                    "Agent not found with id {}",
+                    request.getAgentId()
+            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
@@ -65,6 +82,11 @@ public class TicketServiceImpl
 
         agentDao.update(agent);
 
+        logger.info(
+                "Ticket created successfully with id {}",
+                ticket.getId()
+        );
+
         return ticket;
     }
 
@@ -72,10 +94,20 @@ public class TicketServiceImpl
     public Ticket getTicketById(
             Long id) {
 
+        logger.info(
+                "Fetching ticket with id {}",
+                id
+        );
+
         Ticket ticket =
                 ticketDao.findById(id);
 
         if (ticket == null) {
+
+            logger.warn(
+                    "Ticket not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
@@ -89,6 +121,10 @@ public class TicketServiceImpl
     @Override
     public List<Ticket> getAllTickets() {
 
+        logger.info(
+                "Fetching all tickets"
+        );
+
         return ticketDao.findAll();
     }
 
@@ -96,10 +132,20 @@ public class TicketServiceImpl
     public void deleteTicket(
             Long id) {
 
+        logger.info(
+                "Deleting ticket with id {}",
+                id
+        );
+
         Ticket ticket =
                 ticketDao.findById(id);
 
         if (ticket == null) {
+
+            logger.warn(
+                    "Ticket not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
@@ -108,5 +154,10 @@ public class TicketServiceImpl
         }
 
         ticketDao.delete(id);
+
+        logger.info(
+                "Ticket deleted successfully with id {}",
+                id
+        );
     }
 }
