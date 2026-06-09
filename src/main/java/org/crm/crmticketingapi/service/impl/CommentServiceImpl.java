@@ -10,6 +10,8 @@ import org.crm.crmticketingapi.entity.Comment;
 import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.CommentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +33,25 @@ public class CommentServiceImpl
 
     private final AgentDao agentDao;
 
-    @Override
-    public Comment createComment(CreateCommentRequest request) {
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    CommentServiceImpl.class
+            );
 
-        Ticket ticket = ticketDao.findById(request.getTicketId());
+    @Override
+    public Comment createComment(
+            CreateCommentRequest request) {
+
+        logger.info(
+                "Creating comment for ticket id {} by agent id {}",
+                request.getTicketId(),
+                request.getAgentId()
+        );
+
+        Ticket ticket =
+                ticketDao.findById(
+                        request.getTicketId()
+                );
 
         Agent agent =
                 agentDao.findById(
@@ -43,6 +60,11 @@ public class CommentServiceImpl
 
         if (ticket == null) {
 
+            logger.warn(
+                    "Ticket not found with id {}",
+                    request.getTicketId()
+            );
+
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
                             + request.getTicketId()
@@ -50,6 +72,11 @@ public class CommentServiceImpl
         }
 
         if (agent == null) {
+
+            logger.warn(
+                    "Agent not found with id {}",
+                    request.getAgentId()
+            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
@@ -67,6 +94,11 @@ public class CommentServiceImpl
 
         commentDao.save(comment);
 
+        logger.info(
+                "Comment created successfully with id {}",
+                comment.getId()
+        );
+
         return comment;
     }
 
@@ -74,10 +106,20 @@ public class CommentServiceImpl
     public Comment getCommentById(
             Long id) {
 
+        logger.info(
+                "Fetching comment with id {}",
+                id
+        );
+
         Comment comment =
                 commentDao.findById(id);
 
         if (comment == null) {
+
+            logger.warn(
+                    "Comment not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Comment not found with id : "
@@ -91,6 +133,10 @@ public class CommentServiceImpl
     @Override
     public List<Comment> getAllComments() {
 
+        logger.info(
+                "Fetching all comments"
+        );
+
         return commentDao.findAll();
     }
 
@@ -98,10 +144,20 @@ public class CommentServiceImpl
     public void deleteComment(
             Long id) {
 
+        logger.info(
+                "Deleting comment with id {}",
+                id
+        );
+
         Comment comment =
                 commentDao.findById(id);
 
         if (comment == null) {
+
+            logger.warn(
+                    "Comment not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Comment not found with id : "
@@ -110,5 +166,10 @@ public class CommentServiceImpl
         }
 
         commentDao.delete(id);
+
+        logger.info(
+                "Comment deleted successfully with id {}",
+                id
+        );
     }
 }

@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor(
         onConstructor = @__(@Autowired)
@@ -23,9 +26,21 @@ public class AgentServiceImpl
 
     private final AgentDao agentDao;
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(
+                    AgentServiceImpl.class
+            );
+
+
+
     @Override
     public Agent createAgent(
             CreateAgentRequest request) {
+
+        logger.info(
+                "Creating agent with email {}",
+                request.getEmail()
+        );
 
         Agent agent =
                 Agent.builder()
@@ -38,6 +53,10 @@ public class AgentServiceImpl
                         .build();
 
         agentDao.save(agent);
+        logger.info(
+                "Agent created successfully with id {}",
+                agent.getId()
+        );
 
         return agent;
     }
@@ -45,11 +64,19 @@ public class AgentServiceImpl
     @Override
     public Agent getAgentById(
             Long id) {
+        logger.info(
+                "Fetching agent with id {}",
+                id
+        );
 
         Agent agent =
                 agentDao.findById(id);
 
         if (agent == null) {
+            logger.warn(
+                    "Agent not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : " + id
@@ -68,13 +95,28 @@ public class AgentServiceImpl
     public void deleteAgent(
             Long id) {
 
+        logger.info(
+                "Deleting agent with id {}",
+                id
+        );
+
         Agent ag = agentDao.findById(id);
         if (ag == null) {
+
+            logger.warn(
+                    "Agent not found with id {}",
+                    id
+            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : " + id
             );
         }
+
         agentDao.delete(id);
+        logger.info(
+                "Agent deleted successfully with id {}",
+                id
+        );
     }
 }
