@@ -8,7 +8,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
+import org.hibernate.Transaction;
 import java.util.List;
 
 @Repository
@@ -24,42 +24,108 @@ public class AgentDaoImpl
     public void save(
             Agent agent) {
 
-        sessionFactory
-                .getCurrentSession()
-                .persist(agent);
-    }
+        Session session =
+                sessionFactory.openSession();
 
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.persist(agent);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
+    }
     @Override
     public Agent findById(
             Long id) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .get(
-                        Agent.class,
-                        id
-                );
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session.get(
+                    Agent.class,
+                    id
+            );
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public List<Agent> findAll() {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Agent",
-                        Agent.class
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Agent",
+                            Agent.class
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public void update(
             Agent agent) {
 
-        sessionFactory
-                .getCurrentSession()
-                .merge(agent);
+        Session session =
+                sessionFactory.openSession();
+
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.merge(agent);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
@@ -67,18 +133,41 @@ public class AgentDaoImpl
             Long id) {
 
         Session session =
-                sessionFactory
-                        .getCurrentSession();
+                sessionFactory.openSession();
 
-        Agent agent =
-                session.get(
-                        Agent.class,
-                        id
-                );
+        Transaction transaction =
+                null;
 
-        if (agent != null) {
+        try {
 
-            session.remove(agent);
+            transaction =
+                    session.beginTransaction();
+
+            Agent agent =
+                    session.get(
+                            Agent.class,
+                            id
+                    );
+
+            if (agent != null) {
+
+                session.remove(agent);
+            }
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
         }
     }
 
@@ -86,16 +175,25 @@ public class AgentDaoImpl
     public List<Agent> findByDepartment(
             Department department) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Agent WHERE department = :department",
-                        Agent.class
-                )
-                .setParameter(
-                        "department",
-                        department
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Agent WHERE department = :department",
+                            Agent.class
+                    )
+                    .setParameter(
+                            "department",
+                            department
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
 }

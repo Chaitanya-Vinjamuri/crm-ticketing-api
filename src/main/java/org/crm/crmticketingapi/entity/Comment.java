@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "comments")
@@ -21,6 +21,13 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 20
+    )
+    private String commentCode;
+
     @NotBlank(message = "Comment message is required")
     @Size(
             min = 2,
@@ -32,7 +39,7 @@ public class Comment {
 
     @NotNull(message = "Comment creation date is required")
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 
     @NotNull(message = "Ticket reference is required")
     @ManyToOne

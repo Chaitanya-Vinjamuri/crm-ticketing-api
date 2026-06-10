@@ -3,13 +3,13 @@ package org.crm.crmticketingapi.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Data
 @AllArgsConstructor
 public class ErrorResponse {
 
-    private LocalDateTime timestamp;
+    private Timestamp timestamp;
 
     private int status;
 

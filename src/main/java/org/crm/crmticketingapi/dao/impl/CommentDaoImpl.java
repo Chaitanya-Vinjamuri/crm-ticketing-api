@@ -5,6 +5,7 @@ import org.crm.crmticketingapi.dao.CommentDao;
 import org.crm.crmticketingapi.entity.Comment;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -23,33 +24,75 @@ public class CommentDaoImpl
     public void save(
             Comment comment) {
 
-        sessionFactory
-                .getCurrentSession()
-                .persist(comment);
+        Session session =
+                sessionFactory.openSession();
+
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.persist(comment);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public Comment findById(
             Long id) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .get(
-                        Comment.class,
-                        id
-                );
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session.get(
+                    Comment.class,
+                    id
+            );
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public List<Comment> findAll() {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Comment",
-                        Comment.class
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Comment",
+                            Comment.class
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
@@ -57,18 +100,41 @@ public class CommentDaoImpl
             Long id) {
 
         Session session =
-                sessionFactory
-                        .getCurrentSession();
+                sessionFactory.openSession();
 
-        Comment comment =
-                session.get(
-                        Comment.class,
-                        id
-                );
+        Transaction transaction =
+                null;
 
-        if (comment != null) {
+        try {
 
-            session.remove(comment);
+            transaction =
+                    session.beginTransaction();
+
+            Comment comment =
+                    session.get(
+                            Comment.class,
+                            id
+                    );
+
+            if (comment != null) {
+
+                session.remove(comment);
+            }
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
         }
     }
 
@@ -76,24 +142,59 @@ public class CommentDaoImpl
     public List<Comment> findByTicketId(
             Long ticketId) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Comment WHERE ticket.id = :ticketId",
-                        Comment.class
-                )
-                .setParameter(
-                        "ticketId",
-                        ticketId
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Comment WHERE ticket.id = :ticketId",
+                            Comment.class
+                    )
+                    .setParameter(
+                            "ticketId",
+                            ticketId
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
+
     @Override
     public void update(
             Comment comment) {
 
-        sessionFactory
-                .getCurrentSession()
-                .merge(comment);
+        Session session =
+                sessionFactory.openSession();
+
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.merge(comment);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
     }
 }

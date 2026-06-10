@@ -9,13 +9,15 @@ import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.TicketService;
+import org.crm.crmticketingapi.util.CodeGeneratorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.crm.crmticketingapi.util.ValidationUtil;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.List;
 
 @Service
@@ -39,6 +41,13 @@ public class TicketServiceImpl
     public Ticket createTicket(
             CreateTicketRequest request) {
 
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "Ticket request cannot be null"
+            );
+        }
+
         logger.info(
                 "Creating ticket for agent id {}",
                 request.getAgentId()
@@ -51,7 +60,7 @@ public class TicketServiceImpl
 
         if (agent == null) {
 
-            logger.warn(
+            logger.error(
                     "Agent not found with id {}",
                     request.getAgentId()
             );
@@ -64,35 +73,62 @@ public class TicketServiceImpl
 
         Ticket ticket =
                 Ticket.builder()
+                        .ticketCode(
+                                CodeGeneratorUtil
+                                        .generateTicketCode()
+                        )
                         .title(request.getTitle())
                         .description(request.getDescription())
                         .customerEmail(request.getCustomerEmail())
                         .priority(request.getPriority())
                         .issueType(request.getIssueType())
                         .status(TicketStatus.OPEN)
-                        .createdAt(LocalDateTime.now())
+                        .createdAt(
+                                new Timestamp(
+                                        System.currentTimeMillis()
+                                )
+                        )
                         .assignedAgent(agent)
                         .build();
 
-        ticketDao.save(ticket);
+        try {
 
-        agent.setAssignedTicketCount(
-                agent.getAssignedTicketCount() + 1
-        );
+            ticketDao.save(ticket);
 
-        agentDao.update(agent);
+            agent.setAssignedTicketCount(
+                    agent.getAssignedTicketCount() + 1
+            );
 
-        logger.info(
-                "Ticket created successfully with id {}",
-                ticket.getId()
-        );
+            agentDao.update(agent);
 
-        return ticket;
+            logger.info(
+                    "Ticket created successfully with id {}",
+                    ticket.getId()
+            );
+
+            return ticket;
+
+        } catch (Exception ex) {
+
+            logger.error(
+                    "Failed to create ticket for agent id {}",
+                    request.getAgentId(),
+                    ex
+            );
+
+            throw ex;
+        }
     }
+
 
     @Override
     public Ticket getTicketById(
             Long id) {
+
+        ValidationUtil.validateId(
+                id,
+                "Ticket"
+        );
 
         logger.info(
                 "Fetching ticket with id {}",
@@ -104,7 +140,7 @@ public class TicketServiceImpl
 
         if (ticket == null) {
 
-            logger.warn(
+            logger.error(
                     "Ticket not found with id {}",
                     id
             );
@@ -132,6 +168,11 @@ public class TicketServiceImpl
     public void deleteTicket(
             Long id) {
 
+        ValidationUtil.validateId(
+                id,
+                "Ticket"
+        );
+
         logger.info(
                 "Deleting ticket with id {}",
                 id
@@ -142,7 +183,7 @@ public class TicketServiceImpl
 
         if (ticket == null) {
 
-            logger.warn(
+            logger.error(
                     "Ticket not found with id {}",
                     id
             );
@@ -153,18 +194,43 @@ public class TicketServiceImpl
             );
         }
 
-        ticketDao.delete(id);
+        try {
 
-        logger.info(
-                "Ticket deleted successfully with id {}",
-                id
-        );
+            ticketDao.delete(id);
+
+            logger.info(
+                    "Ticket deleted successfully with id {}",
+                    id
+            );
+
+        } catch (Exception ex) {
+
+            logger.error(
+                    "Failed to delete ticket with id {}",
+                    id,
+                    ex
+            );
+
+            throw ex;
+        }
     }
 
     @Override
     public Ticket updateTicket(
             Long id,
             CreateTicketRequest request) {
+
+        ValidationUtil.validateId(
+                id,
+                "Ticket"
+        );
+
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "Ticket request cannot be null"
+            );
+        }
 
         logger.info(
                 "Updating ticket with id {}",
@@ -176,8 +242,14 @@ public class TicketServiceImpl
 
         if (ticket == null) {
 
+            logger.error(
+                    "Ticket not found with id {}",
+                    id
+            );
+
             throw new ResourceNotFoundException(
-                    "Ticket not found with id : " + id
+                    "Ticket not found with id : "
+                            + id
             );
         }
 
@@ -188,38 +260,61 @@ public class TicketServiceImpl
 
         if (agent == null) {
 
+            logger.error(
+                    "Agent not found with id {}",
+                    request.getAgentId()
+            );
+
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
                             + request.getAgentId()
             );
         }
 
-        ticket.setTitle(
-                request.getTitle()
-        );
+        try {
 
-        ticket.setDescription(
-                request.getDescription()
-        );
+            ticket.setTitle(
+                    request.getTitle()
+            );
 
-        ticket.setCustomerEmail(
-                request.getCustomerEmail()
-        );
+            ticket.setDescription(
+                    request.getDescription()
+            );
 
-        ticket.setPriority(
-                request.getPriority()
-        );
+            ticket.setCustomerEmail(
+                    request.getCustomerEmail()
+            );
 
-        ticket.setIssueType(
-                request.getIssueType()
-        );
+            ticket.setPriority(
+                    request.getPriority()
+            );
 
-        ticket.setAssignedAgent(
-                agent
-        );
+            ticket.setIssueType(
+                    request.getIssueType()
+            );
 
-        ticketDao.update(ticket);
+            ticket.setAssignedAgent(
+                    agent
+            );
 
-        return ticket;
+            ticketDao.update(ticket);
+
+            logger.info(
+                    "Ticket updated successfully with id {}",
+                    id
+            );
+
+            return ticket;
+
+        } catch (Exception ex) {
+
+            logger.error(
+                    "Failed to update ticket with id {}",
+                    id,
+                    ex
+            );
+
+            throw ex;
+        }
     }
 }

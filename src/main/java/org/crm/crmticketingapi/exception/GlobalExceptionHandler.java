@@ -7,7 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        LocalDateTime.now(),
+                        new Timestamp(System.currentTimeMillis()),
                         HttpStatus.NOT_FOUND.value(),
                         "Not Found",
                         ex.getMessage()
@@ -29,6 +29,26 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
+    @ExceptionHandler(
+            IllegalArgumentException.class
+    )
+    public ResponseEntity<ErrorResponse>
+    handleIllegalArgumentException(
+            IllegalArgumentException ex) {
+
+        ErrorResponse response =
+                new ErrorResponse(
+                        new Timestamp(System.currentTimeMillis()),
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Bad Request",
+                        ex.getMessage()
+                );
+
+        return ResponseEntity
+                .badRequest()
                 .body(response);
     }
 
@@ -46,7 +66,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        LocalDateTime.now(),
+                        new Timestamp(System.currentTimeMillis()),
                         HttpStatus.BAD_REQUEST.value(),
                         "Validation Failed",
                         message
@@ -66,7 +86,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        LocalDateTime.now(),
+                        new Timestamp(System.currentTimeMillis()),
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Internal Server Error",
                         ex.getMessage()

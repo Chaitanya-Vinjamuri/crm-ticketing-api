@@ -10,8 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDateTime;
-
+import java.sql.Timestamp;
 @Entity
 @Table(
         name = "tickets",
@@ -36,6 +35,15 @@ public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 20
+    )
+    private String ticketCode;
+
+
 
     @NotBlank(message = "Title is required")
     @Size(
@@ -78,9 +86,9 @@ public class Ticket {
 
     @NotNull(message = "Created date is required")
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 
-    private LocalDateTime resolvedAt;
+    private Timestamp resolvedAt;
 
     @NotNull(message = "Assigned agent is required")
     @ManyToOne
