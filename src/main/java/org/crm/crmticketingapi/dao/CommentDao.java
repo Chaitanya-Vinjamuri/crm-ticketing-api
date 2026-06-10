@@ -17,4 +17,5 @@ public interface CommentDao {
     List<Comment> findByTicketId(
             Long ticketId
     );
+    void update(Comment comment);
 }
