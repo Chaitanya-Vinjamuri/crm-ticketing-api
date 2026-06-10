@@ -37,6 +37,9 @@ public class TicketServiceImpl
                     TicketServiceImpl.class
             );
 
+    
+
+
     @Override
     public Ticket createTicket(
             CreateTicketRequest request) {
@@ -48,10 +51,42 @@ public class TicketServiceImpl
             );
         }
 
-        logger.info(
-                "Creating ticket for agent id {}",
-                request.getAgentId()
-        );
+        Timestamp now =
+                new Timestamp(
+                        System.currentTimeMillis()
+                );
+
+        Timestamp slaDueAt;
+
+        switch (request.getPriority()) {
+
+            case LOW:
+                slaDueAt =
+                        new Timestamp(
+                                now.getTime()
+                                        + (72L * 60 * 60 * 1000)
+                        );
+                break;
+
+            case MEDIUM:
+                slaDueAt =
+                        new Timestamp(
+                                now.getTime()
+                                        + (48L * 60 * 60 * 1000)
+                        );
+                break;
+
+            case HIGH:
+                slaDueAt =
+                        new Timestamp(
+                                now.getTime()
+                                        + (24L * 60 * 60 * 1000)
+                        );
+                break;
+
+            default:
+                slaDueAt = now;
+        }
 
         Agent agent =
                 agentDao.findById(
@@ -71,6 +106,8 @@ public class TicketServiceImpl
             );
         }
 
+        // agent validation...
+
         Ticket ticket =
                 Ticket.builder()
                         .ticketCode(
@@ -83,11 +120,8 @@ public class TicketServiceImpl
                         .priority(request.getPriority())
                         .issueType(request.getIssueType())
                         .status(TicketStatus.OPEN)
-                        .createdAt(
-                                new Timestamp(
-                                        System.currentTimeMillis()
-                                )
-                        )
+                        .createdAt(now)
+                        .slaDueAt(slaDueAt)
                         .assignedAgent(agent)
                         .build();
 
@@ -119,7 +153,6 @@ public class TicketServiceImpl
             throw ex;
         }
     }
-
 
     @Override
     public Ticket getTicketById(
