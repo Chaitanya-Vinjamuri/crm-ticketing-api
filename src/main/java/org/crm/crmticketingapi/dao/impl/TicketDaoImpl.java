@@ -6,6 +6,7 @@ import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -24,42 +25,109 @@ public class TicketDaoImpl
     public void save(
             Ticket ticket) {
 
-        sessionFactory
-                .getCurrentSession()
-                .persist(ticket);
+        Session session =
+                sessionFactory.openSession();
+
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.persist(ticket);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public Ticket findById(
             Long id) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .get(
-                        Ticket.class,
-                        id
-                );
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session.get(
+                    Ticket.class,
+                    id
+            );
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public List<Ticket> findAll() {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Ticket",
-                        Ticket.class
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Ticket",
+                            Ticket.class
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
     public void update(
             Ticket ticket) {
 
-        sessionFactory
-                .getCurrentSession()
-                .merge(ticket);
+        Session session =
+                sessionFactory.openSession();
+
+        Transaction transaction =
+                null;
+
+        try {
+
+            transaction =
+                    session.beginTransaction();
+
+            session.merge(ticket);
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
+        }
     }
 
     @Override
@@ -67,18 +135,41 @@ public class TicketDaoImpl
             Long id) {
 
         Session session =
-                sessionFactory
-                        .getCurrentSession();
+                sessionFactory.openSession();
 
-        Ticket ticket =
-                session.get(
-                        Ticket.class,
-                        id
-                );
+        Transaction transaction =
+                null;
 
-        if (ticket != null) {
+        try {
 
-            session.remove(ticket);
+            transaction =
+                    session.beginTransaction();
+
+            Ticket ticket =
+                    session.get(
+                            Ticket.class,
+                            id
+                    );
+
+            if (ticket != null) {
+
+                session.remove(ticket);
+            }
+
+            transaction.commit();
+
+        } catch (Exception ex) {
+
+            if (transaction != null) {
+
+                transaction.rollback();
+            }
+
+            throw ex;
+
+        } finally {
+
+            session.close();
         }
     }
 
@@ -86,16 +177,25 @@ public class TicketDaoImpl
     public List<Ticket> findByStatus(
             TicketStatus status) {
 
-        return sessionFactory
-                .getCurrentSession()
-                .createQuery(
-                        "FROM Ticket WHERE status = :status",
-                        Ticket.class
-                )
-                .setParameter(
-                        "status",
-                        status
-                )
-                .getResultList();
+        Session session =
+                sessionFactory.openSession();
+
+        try {
+
+            return session
+                    .createQuery(
+                            "FROM Ticket WHERE status = :status",
+                            Ticket.class
+                    )
+                    .setParameter(
+                            "status",
+                            status
+                    )
+                    .getResultList();
+
+        } finally {
+
+            session.close();
+        }
     }
 }

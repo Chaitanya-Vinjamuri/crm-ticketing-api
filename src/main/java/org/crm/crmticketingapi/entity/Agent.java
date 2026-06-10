@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Entity
 @Table(
@@ -30,6 +30,13 @@ public class Agent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(
+            nullable = false,
+            unique = true,
+            length = 20
+    )
+    private String agentCode;
 
     @NotBlank(message = "Agent name is required")
     @Size(
@@ -64,5 +71,5 @@ public class Agent {
 
     @NotNull(message = "Created date is required")
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
 }
