@@ -78,6 +78,9 @@ public class Ticket {
     @Column(nullable = false)
     private Priority priority;
 
+    @Column(nullable = false)
+    private Timestamp slaDueAt;
+
 
     @NotNull(message = "Issue type is required")
     @Enumerated(EnumType.STRING)
