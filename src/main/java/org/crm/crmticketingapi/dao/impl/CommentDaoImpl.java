@@ -88,4 +88,12 @@ public class CommentDaoImpl
                 )
                 .getResultList();
     }
+    @Override
+    public void update(
+            Comment comment) {
+
+        sessionFactory
+                .getCurrentSession()
+                .merge(comment);
+    }
 }
