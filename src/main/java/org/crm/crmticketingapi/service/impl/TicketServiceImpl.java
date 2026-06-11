@@ -1,6 +1,8 @@
 package org.crm.crmticketingapi.service.impl;
-
+import org.crm.crmticketingapi.dto.event.HistoryEvent;
+import org.crm.crmticketingapi.kafka.producer.HistoryEventProducer;
 import lombok.RequiredArgsConstructor;
+import org.crm.crmticketingapi.cache.LruCache;
 import org.crm.crmticketingapi.dao.AgentDao;
 import org.crm.crmticketingapi.dao.TicketDao;
 import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
@@ -10,12 +12,12 @@ import org.crm.crmticketingapi.enums.TicketStatus;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.TicketService;
 import org.crm.crmticketingapi.util.CodeGeneratorUtil;
+import org.crm.crmticketingapi.util.ValidationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.crm.crmticketingapi.util.ValidationUtil;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -32,13 +34,75 @@ public class TicketServiceImpl
 
     private final AgentDao agentDao;
 
+    private final LruCache<Long, Ticket> lruCache;
+
+    private final HistoryEventProducer historyEventProducer;
+
     private static final Logger logger =
             LoggerFactory.getLogger(
                     TicketServiceImpl.class
             );
 
-    
+    @Override
+    public Ticket updateStatus(
+            Long id,
+            TicketStatus status) {
 
+        ValidationUtil.validateId(
+                id,
+                "Ticket"
+        );
+
+        Ticket ticket =
+                ticketDao.findById(id);
+
+        if (ticket == null) {
+
+            throw new ResourceNotFoundException(
+                    "Ticket not found with id : "
+                            + id
+            );
+        }
+
+        ticket.setStatus(
+                status
+        );
+
+        if (status == TicketStatus.RESOLVED) {
+
+            ticket.setResolvedAt(
+                    new Timestamp(
+                            System.currentTimeMillis()
+                    )
+            );
+        }
+
+        ticketDao.update(
+                ticket
+        );
+
+        lruCache.put(
+                id,
+                ticket
+        );
+
+        historyEventProducer.publish(
+                HistoryEvent.builder()
+                        .objectType("TICKET")
+                        .objectId(ticket.getId())
+                        .action(
+                                status.name()
+                        )
+                        .build()
+        );
+
+        logger.info(
+                "Ticket status updated successfully for id {}",
+                id
+        );
+
+        return ticket;
+    }
 
     @Override
     public Ticket createTicket(
@@ -106,8 +170,6 @@ public class TicketServiceImpl
             );
         }
 
-        // agent validation...
-
         Ticket ticket =
                 Ticket.builder()
                         .ticketCode(
@@ -127,7 +189,26 @@ public class TicketServiceImpl
 
         try {
 
+            System.out.println("STEP-1 BEFORE SAVE");
+
             ticketDao.save(ticket);
+
+            System.out.println("STEP-2 AFTER SAVE");
+
+            historyEventProducer.publish(
+                    HistoryEvent.builder()
+                            .objectType("TICKET")
+                            .objectId(ticket.getId())
+                            .action("CREATE")
+                            .build()
+            );
+
+            System.out.println("STEP-3 AFTER PUBLISH");
+
+            lruCache.put(
+                    ticket.getId(),
+                    ticket
+            );
 
             agent.setAssignedTicketCount(
                     agent.getAssignedTicketCount() + 1
@@ -169,6 +250,18 @@ public class TicketServiceImpl
         );
 
         Ticket ticket =
+                lruCache.get(id);
+
+        if (ticket != null) {
+
+            logger.info(
+                    "Ticket fetched from LRU cache"
+            );
+
+            return ticket;
+        }
+
+        ticket =
                 ticketDao.findById(id);
 
         if (ticket == null) {
@@ -183,6 +276,11 @@ public class TicketServiceImpl
                             + id
             );
         }
+
+        lruCache.put(
+                id,
+                ticket
+        );
 
         return ticket;
     }
@@ -230,6 +328,16 @@ public class TicketServiceImpl
         try {
 
             ticketDao.delete(id);
+
+            historyEventProducer.publish(
+                    HistoryEvent.builder()
+                            .objectType("TICKET")
+                            .objectId(id)
+                            .action("DELETE")
+                            .build()
+            );
+
+            lruCache.remove(id);
 
             logger.info(
                     "Ticket deleted successfully with id {}",
@@ -331,6 +439,19 @@ public class TicketServiceImpl
             );
 
             ticketDao.update(ticket);
+
+            historyEventProducer.publish(
+                    HistoryEvent.builder()
+                            .objectType("TICKET")
+                            .objectId(ticket.getId())
+                            .action("UPDATE")
+                            .build()
+            );
+
+            lruCache.put(
+                    id,
+                    ticket
+            );
 
             logger.info(
                     "Ticket updated successfully with id {}",

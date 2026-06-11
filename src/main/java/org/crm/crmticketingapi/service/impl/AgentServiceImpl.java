@@ -6,16 +6,17 @@ import org.crm.crmticketingapi.dto.request.CreateAgentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.AgentService;
+import org.crm.crmticketingapi.service.RedisService;
 import org.crm.crmticketingapi.util.CodeGeneratorUtil;
+import org.crm.crmticketingapi.util.ValidationUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.crm.crmticketingapi.util.ValidationUtil;
+
 import java.sql.Timestamp;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor(
@@ -27,12 +28,12 @@ public class AgentServiceImpl
 
     private final AgentDao agentDao;
 
+    private final RedisService redisService;
+
     private static final Logger logger =
             LoggerFactory.getLogger(
                     AgentServiceImpl.class
             );
-
-
 
     @Override
     public Agent createAgent(
@@ -72,6 +73,11 @@ public class AgentServiceImpl
 
             agentDao.save(agent);
 
+            redisService.save(
+                    "agent:" + agent.getId(),
+                    agent
+            );
+
             logger.info(
                     "Agent created successfully with id {}",
                     agent.getId()
@@ -94,6 +100,7 @@ public class AgentServiceImpl
     @Override
     public Agent getAgentById(
             Long id) {
+
         ValidationUtil.validateId(
                 id,
                 "Agent"
@@ -105,9 +112,24 @@ public class AgentServiceImpl
         );
 
         Agent agent =
+                (Agent) redisService.get(
+                        "agent:" + id
+                );
+
+        if (agent != null) {
+
+            logger.info(
+                    "Agent fetched from Redis cache"
+            );
+
+            return agent;
+        }
+
+        agent =
                 agentDao.findById(id);
 
         if (agent == null) {
+
             logger.error(
                     "Agent not found with id {}",
                     id
@@ -117,6 +139,12 @@ public class AgentServiceImpl
                     "Agent not found with id : " + id
             );
         }
+
+        redisService.save(
+                "agent:" + id,
+                agent
+        );
+
         return agent;
     }
 
@@ -158,6 +186,10 @@ public class AgentServiceImpl
         try {
 
             agentDao.delete(id);
+
+            redisService.delete(
+                    "agent:" + id
+            );
 
             logger.info(
                     "Agent deleted successfully with id {}",
@@ -215,12 +247,28 @@ public class AgentServiceImpl
 
         try {
 
-            agent.setName(request.getName());
-            agent.setEmail(request.getEmail());
-            agent.setDepartment(request.getDepartment());
-            agent.setActive(request.getActive());
+            agent.setName(
+                    request.getName()
+            );
+
+            agent.setEmail(
+                    request.getEmail()
+            );
+
+            agent.setDepartment(
+                    request.getDepartment()
+            );
+
+            agent.setActive(
+                    request.getActive()
+            );
 
             agentDao.update(agent);
+
+            redisService.save(
+                    "agent:" + id,
+                    agent
+            );
 
             logger.info(
                     "Agent updated successfully with id {}",
