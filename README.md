@@ -69,7 +69,7 @@ MySQL Database
 
 ---
 
-# Package Structure
+# Updated Package Structure
 
 ```text
 src/main/java/org/crm/crmticketingapi
@@ -82,53 +82,80 @@ src/main/java/org/crm/crmticketingapi
 ├── service
 │   ├── AgentService
 │   ├── TicketService
-│   └── CommentService
+│   ├── CommentService
+│   └── RedisService
 │
 ├── service/impl
 │   ├── AgentServiceImpl
 │   ├── TicketServiceImpl
-│   └── CommentServiceImpl
+│   ├── CommentServiceImpl
+│   └── RedisServiceImpl
 │
 ├── dao
 │   ├── AgentDao
 │   ├── TicketDao
-│   └── CommentDao
+│   ├── CommentDao
+│   └── TicketHistoryDao
 │
 ├── dao/impl
 │   ├── AgentDaoImpl
 │   ├── TicketDaoImpl
-│   └── CommentDaoImpl
+│   ├── CommentDaoImpl
+│   └── TicketHistoryDaoImpl
 │
 ├── entity
 │   ├── Agent
 │   ├── Ticket
-│   └── Comment
+│   ├── Comment
+│   └── TicketHistory
 │
 ├── dto
-│   └── request
-        └── CreateAgentRequest
-        └── CreateCommentRequest
-        └── CreateTicketRequest
-    └── response
-        └── ErrorResponse
+│   ├── request
+│   │   ├── CreateAgentRequest
+│   │   ├── CreateTicketRequest
+│   │   ├── CreateCommentRequest
+│   │   └── UpdateTicketStatusRequest
+│   │
+│   ├── response
+│   │   └── ErrorResponse
+│   │
+│   └── event
+│       └── HistoryEvent
+│
+├── kafka
+│   ├── producer
+│   │   └── HistoryEventProducer
+│   │
+│   └── consumer
+│       └── HistoryEventConsumer
+│
+├── cache
+│   └── LruCache
 │
 ├── config
 │   ├── DataSourceConfig
 │   ├── HibernateConfig
-│   └── TransactionConfig
-    └── SwaggerConfig
+│   ├── TransactionConfig
+│   ├── SwaggerConfig
+│   ├── KafkaConfig
+│   └── CacheConfig
 │
 ├── exception
 │   ├── ResourceNotFoundException
 │   └── GlobalExceptionHandler
 │
-└── enums
-    └── Department
-    └── IssueType
-    └── Priority
-    └── TicketStatus
-```
-
+├── enums
+│   ├── Department
+│   ├── IssueType
+│   ├── Priority
+│   ├── TicketStatus
+│   └── HistoryAction
+│
+├── util
+│   ├── CodeGeneratorUtil
+│   └── ValidationUtil
+│
+└── CrmTicketingApiApplication
 ---
 
 # Features Implemented
@@ -540,6 +567,216 @@ Contains:
 | Database Indexes | ✅ |
 | Response Status Codes | ✅ |
 
+# Advanced Features
+
+## Redis Cache
+
+Implemented Redis caching for Agent APIs.
+
+### Benefits
+
+- Faster retrieval of agents
+- Reduced database load
+- Distributed cache support
+
+### Cache Flow
+
+```text
+GET Agent
+    ↓
+Redis Cache Check
+    ↓
+Cache Hit → Return Data
+    ↓
+Cache Miss
+    ↓
+Database Query
+    ↓
+Store In Redis
+```
+
+---
+
+## Caffeine Cache
+
+Implemented Caffeine cache for Comment APIs.
+
+### Benefits
+
+- High-performance in-memory caching
+- Reduced Hibernate queries
+- Automatic eviction support
+
+### Cache Flow
+
+```text
+GET Comment
+    ↓
+Caffeine Cache Check
+    ↓
+Cache Hit → Return Data
+    ↓
+Cache Miss
+    ↓
+Database Query
+    ↓
+Store In Caffeine Cache
+```
+
+---
+
+## Custom LRU Cache
+
+Implemented a custom Least Recently Used (LRU) cache for Ticket APIs.
+
+### Benefits
+
+- Efficient memory utilization
+- Fast ticket retrieval
+- Demonstrates Data Structures implementation
+
+### Cache Flow
+
+```text
+GET Ticket
+    ↓
+LRU Cache Check
+    ↓
+Cache Hit → Return Data
+    ↓
+Cache Miss
+    ↓
+Database Query
+    ↓
+Store In LRU Cache
+```
+
+---
+
+## Apache Kafka Integration
+
+Implemented asynchronous event-driven communication using Kafka.
+
+### Producer
+
+`HistoryEventProducer`
+
+Publishes events whenever:
+
+- Ticket Created
+- Ticket Updated
+- Ticket Deleted
+- Ticket Status Changed
+
+### Consumer
+
+`HistoryEventConsumer`
+
+Consumes events and stores audit records into the `ticket_history` table.
+
+### Kafka Flow
+
+```text
+Ticket Action
+      ↓
+HistoryEventProducer
+      ↓
+Kafka Topic
+(history-events)
+      ↓
+HistoryEventConsumer
+      ↓
+ticket_history Table
+```
+
+---
+
+## Ticket Audit History
+
+Implemented complete audit tracking using Kafka events.
+
+Every ticket action generates a history record.
+
+### Supported Actions
+
+- CREATE
+- UPDATE
+- DELETE
+- OPEN
+- IN_PROGRESS
+- RESOLVED
+- CLOSED
+
+### Example Lifecycle
+
+```text
+CREATE
+   ↓
+OPEN
+   ↓
+IN_PROGRESS
+   ↓
+RESOLVED
+   ↓
+CLOSED
+```
+
+All actions are persisted in the `ticket_history` table.
+
+---
+
+## SLA Tracking
+
+SLA due dates are automatically calculated based on ticket priority.
+
+### Priority Mapping
+
+| Priority | SLA |
+|-----------|------|
+| LOW | 72 Hours |
+| MEDIUM | 48 Hours |
+| HIGH | 24 Hours |
+
+Stored in:
+
+```java
+private Timestamp slaDueAt;
+```
+
+---
+
+```
+
+---
+
+# Updated Project Status
+
+| Requirement | Status |
+|------------|---------|
+| Hibernate SessionFactory | ✅ |
+| HikariCP | ✅ |
+| Spring Boot Configuration | ✅ |
+| Controller Layer | ✅ |
+| Service Layer | ✅ |
+| DAO Layer | ✅ |
+| CRUD Operations | ✅ |
+| Enums | ✅ |
+| Validations | ✅ |
+| Swagger Documentation | ✅ |
+| Global Exception Handling | ✅ |
+| SLF4J Logging | ✅ |
+| Logback XML | ✅ |
+| Database Indexes | ✅ |
+| Response Status Codes | ✅ |
+| Redis Cache | ✅ |
+| Caffeine Cache | ✅ |
+| Custom LRU Cache | ✅ |
+| Kafka Producer | ✅ |
+| Kafka Consumer | ✅ |
+| Event Driven Architecture | ✅ |
+| Ticket Audit History | ✅ |
+| Ticket Status Workflow | ✅ |
+| SLA Tracking | ✅ |
 ---
 
 # Author
