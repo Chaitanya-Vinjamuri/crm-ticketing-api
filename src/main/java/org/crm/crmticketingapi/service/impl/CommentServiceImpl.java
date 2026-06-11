@@ -1,5 +1,6 @@
 package org.crm.crmticketingapi.service.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dao.AgentDao;
 import org.crm.crmticketingapi.dao.CommentDao;
@@ -11,12 +12,12 @@ import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.CommentService;
 import org.crm.crmticketingapi.util.CodeGeneratorUtil;
+import org.crm.crmticketingapi.util.ValidationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.crm.crmticketingapi.util.ValidationUtil;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -34,6 +35,8 @@ public class CommentServiceImpl
     private final TicketDao ticketDao;
 
     private final AgentDao agentDao;
+
+    private final Cache<Long, Comment> commentCache;
 
     private static final Logger logger =
             LoggerFactory.getLogger(
@@ -69,11 +72,6 @@ public class CommentServiceImpl
 
         if (ticket == null) {
 
-            logger.error(
-                    "Ticket not found with id {}",
-                    request.getTicketId()
-            );
-
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
                             + request.getTicketId()
@@ -81,11 +79,6 @@ public class CommentServiceImpl
         }
 
         if (agent == null) {
-
-            logger.error(
-                    "Agent not found with id {}",
-                    request.getAgentId()
-            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
@@ -99,7 +92,9 @@ public class CommentServiceImpl
                                 CodeGeneratorUtil
                                         .generateCommentCode()
                         )
-                        .message(request.getMessage())
+                        .message(
+                                request.getMessage()
+                        )
                         .createdAt(
                                 new Timestamp(
                                         System.currentTimeMillis()
@@ -109,27 +104,19 @@ public class CommentServiceImpl
                         .agent(agent)
                         .build();
 
-        try {
+        commentDao.save(comment);
 
-            commentDao.save(comment);
+        commentCache.put(
+                comment.getId(),
+                comment
+        );
 
-            logger.info(
-                    "Comment created successfully with id {}",
-                    comment.getId()
-            );
+        logger.info(
+                "Comment created successfully with id {}",
+                comment.getId()
+        );
 
-            return comment;
-
-        } catch (Exception ex) {
-
-            logger.error(
-                    "Failed to create comment for ticket id {}",
-                    request.getTicketId(),
-                    ex
-            );
-
-            throw ex;
-        }
+        return comment;
     }
 
     @Override
@@ -147,20 +134,41 @@ public class CommentServiceImpl
         );
 
         Comment comment =
-                commentDao.findById(id);
+                commentCache.getIfPresent(
+                        id
+                );
+
+        if (comment != null) {
+
+            logger.info(
+                    "Comment fetched from Caffeine cache"
+            );
+
+            return comment;
+        }
+
+        comment =
+                commentDao.findById(
+                        id
+                );
+
+
 
         if (comment == null) {
-
-            logger.error(
-                    "Comment not found with id {}",
-                    id
-            );
 
             throw new ResourceNotFoundException(
                     "Comment not found with id : "
                             + id
             );
         }
+
+        commentCache.put(
+                id,
+                comment
+        );
+        logger.info(
+                "Comment stored in Caffeine cache"
+        );
 
         return comment;
     }
@@ -184,20 +192,12 @@ public class CommentServiceImpl
                 "Comment"
         );
 
-        logger.info(
-                "Deleting comment with id {}",
-                id
-        );
-
         Comment comment =
-                commentDao.findById(id);
+                commentDao.findById(
+                        id
+                );
 
         if (comment == null) {
-
-            logger.error(
-                    "Comment not found with id {}",
-                    id
-            );
 
             throw new ResourceNotFoundException(
                     "Comment not found with id : "
@@ -205,25 +205,18 @@ public class CommentServiceImpl
             );
         }
 
-        try {
+        commentDao.delete(
+                id
+        );
 
-            commentDao.delete(id);
+        commentCache.invalidate(
+                id
+        );
 
-            logger.info(
-                    "Comment deleted successfully with id {}",
-                    id
-            );
-
-        } catch (Exception ex) {
-
-            logger.error(
-                    "Failed to delete comment with id {}",
-                    id,
-                    ex
-            );
-
-            throw ex;
-        }
+        logger.info(
+                "Comment deleted successfully with id {}",
+                id
+        );
     }
 
     @Override
@@ -243,20 +236,12 @@ public class CommentServiceImpl
             );
         }
 
-        logger.info(
-                "Updating comment with id {}",
-                id
-        );
-
         Comment comment =
-                commentDao.findById(id);
+                commentDao.findById(
+                        id
+                );
 
         if (comment == null) {
-
-            logger.error(
-                    "Comment not found with id {}",
-                    id
-            );
 
             throw new ResourceNotFoundException(
                     "Comment not found with id : "
@@ -269,12 +254,12 @@ public class CommentServiceImpl
                         request.getTicketId()
                 );
 
-        if (ticket == null) {
+        Agent agent =
+                agentDao.findById(
+                        request.getAgentId()
+                );
 
-            logger.error(
-                    "Ticket not found with id {}",
-                    request.getTicketId()
-            );
+        if (ticket == null) {
 
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
@@ -282,17 +267,7 @@ public class CommentServiceImpl
             );
         }
 
-        Agent agent =
-                agentDao.findById(
-                        request.getAgentId()
-                );
-
         if (agent == null) {
-
-            logger.error(
-                    "Agent not found with id {}",
-                    request.getAgentId()
-            );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
@@ -300,38 +275,32 @@ public class CommentServiceImpl
             );
         }
 
-        try {
+        comment.setMessage(
+                request.getMessage()
+        );
 
-            comment.setMessage(
-                    request.getMessage()
-            );
+        comment.setTicket(
+                ticket
+        );
 
-            comment.setTicket(
-                    ticket
-            );
+        comment.setAgent(
+                agent
+        );
 
-            comment.setAgent(
-                    agent
-            );
+        commentDao.update(
+                comment
+        );
 
-            commentDao.update(comment);
+        commentCache.put(
+                id,
+                comment
+        );
 
-            logger.info(
-                    "Comment updated successfully with id {}",
-                    id
-            );
+        logger.info(
+                "Comment updated successfully with id {}",
+                id
+        );
 
-            return comment;
-
-        } catch (Exception ex) {
-
-            logger.error(
-                    "Failed to update comment with id {}",
-                    id,
-                    ex
-            );
-
-            throw ex;
-        }
+        return comment;
     }
 }

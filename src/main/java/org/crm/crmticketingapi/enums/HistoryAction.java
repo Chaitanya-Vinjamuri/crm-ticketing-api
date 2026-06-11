@@ -4,5 +4,10 @@ public enum HistoryAction {
 
     CREATE,
     UPDATE,
-    DELETE
+    DELETE,
+
+    OPEN,
+    IN_PROGRESS,
+    RESOLVED,
+    CLOSED
 }
