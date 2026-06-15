@@ -2,7 +2,6 @@ package org.crm.crmticketingapi.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dao.AgentDao;
-import org.crm.crmticketingapi.dto.request.CreateAgentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.exception.ResourceNotFoundException;
 import org.crm.crmticketingapi.service.AgentService;
@@ -37,9 +36,9 @@ public class AgentServiceImpl
 
     @Override
     public Agent createAgent(
-            CreateAgentRequest request) {
+            Agent agent) {
 
-        if (request == null) {
+        if (agent == null) {
 
             throw new IllegalArgumentException(
                     "Agent request cannot be null"
@@ -48,30 +47,29 @@ public class AgentServiceImpl
 
         logger.info(
                 "Creating agent with email {}",
-                request.getEmail()
+                agent.getEmail()
         );
 
         try {
 
-            Agent agent =
-                    Agent.builder()
-                            .agentCode(
-                                    CodeGeneratorUtil
-                                            .generateAgentCode()
-                            )
-                            .name(request.getName())
-                            .email(request.getEmail())
-                            .department(request.getDepartment())
-                            .active(request.getActive())
-                            .assignedTicketCount(0)
-                            .createdAt(
-                                    new Timestamp(
-                                            System.currentTimeMillis()
-                                    )
-                            )
-                            .build();
+            agent.setAgentCode(
+                    CodeGeneratorUtil
+                            .generateAgentCode()
+            );
 
-            agentDao.save(agent);
+            agent.setAssignedTicketCount(
+                    0
+            );
+
+            agent.setCreatedAt(
+                    new Timestamp(
+                            System.currentTimeMillis()
+                    )
+            );
+
+            agentDao.save(
+                    agent
+            );
 
             redisService.save(
                     "agent:" + agent.getId(),
@@ -89,7 +87,7 @@ public class AgentServiceImpl
 
             logger.error(
                     "Failed to create agent with email {}",
-                    request.getEmail(),
+                    agent.getEmail(),
                     ex
             );
 
@@ -211,7 +209,7 @@ public class AgentServiceImpl
     @Override
     public Agent updateAgent(
             Long id,
-            CreateAgentRequest request) {
+            Agent request) {
 
         ValidationUtil.validateId(
                 id,
@@ -241,7 +239,8 @@ public class AgentServiceImpl
             );
 
             throw new ResourceNotFoundException(
-                    "Agent not found with id : " + id
+                    "Agent not found with id : "
+                            + id
             );
         }
 
@@ -263,7 +262,9 @@ public class AgentServiceImpl
                     request.getActive()
             );
 
-            agentDao.update(agent);
+            agentDao.update(
+                    agent
+            );
 
             redisService.save(
                     "agent:" + id,

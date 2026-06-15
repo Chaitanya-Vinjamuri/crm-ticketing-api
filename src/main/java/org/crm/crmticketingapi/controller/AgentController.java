@@ -2,7 +2,6 @@ package org.crm.crmticketingapi.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.crm.crmticketingapi.dto.request.CreateAgentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.service.AgentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,20 +24,18 @@ public class AgentController {
     public ResponseEntity<Agent> createAgent(
             @Valid
             @RequestBody
-            CreateAgentRequest request) {
-
-        Agent agent =
-                agentService.createAgent(request);
+            Agent agent) {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(agent);
+                .body(
+                        agentService.createAgent(agent)
+                );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Agent> getAgentById(
-            @PathVariable
-            Long id) {
+            @PathVariable Long id) {
 
         return ResponseEntity.ok(
                 agentService.getAgentById(id)
@@ -55,8 +52,7 @@ public class AgentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteAgent(
-            @PathVariable
-            Long id) {
+            @PathVariable Long id) {
 
         agentService.deleteAgent(id);
 
@@ -64,19 +60,18 @@ public class AgentController {
                 "Agent deleted successfully"
         );
     }
-    @PutMapping("/{id}")
-    public ResponseEntity<Agent> updateAgent(
-            @PathVariable
-            Long id,
 
+    @PostMapping("/update/{id}")
+    public ResponseEntity<Agent> updateAgent(
+            @PathVariable Long id,
             @Valid
             @RequestBody
-            CreateAgentRequest request) {
+            Agent agent) {
 
         return ResponseEntity.ok(
                 agentService.updateAgent(
                         id,
-                        request
+                        agent
                 )
         );
     }

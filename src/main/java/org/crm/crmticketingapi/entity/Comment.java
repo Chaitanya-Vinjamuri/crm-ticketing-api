@@ -1,9 +1,10 @@
 package org.crm.crmticketingapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.sql.Timestamp;
@@ -34,10 +35,12 @@ public class Comment {
             max = 1000,
             message = "Comment must be between 2 and 1000 characters"
     )
-    @Column(nullable = false, length = 1000)
+    @Column(
+            nullable = false,
+            length = 1000
+    )
     private String message;
 
-    @NotNull(message = "Comment creation date is required")
     @Column(nullable = false)
     private Timestamp createdAt;
 
@@ -47,6 +50,7 @@ public class Comment {
             name = "ticket_id",
             nullable = false
     )
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Ticket ticket;
 
     @NotNull(message = "Agent reference is required")
@@ -55,5 +59,22 @@ public class Comment {
             name = "agent_id",
             nullable = false
     )
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Agent agent;
+
+    @JsonProperty("ticketId")
+    public Long getTicketId() {
+
+        return ticket != null
+                ? ticket.getId()
+                : null;
+    }
+
+    @JsonProperty("agentId")
+    public Long getAgentId() {
+
+        return agent != null
+                ? agent.getId()
+                : null;
+    }
 }

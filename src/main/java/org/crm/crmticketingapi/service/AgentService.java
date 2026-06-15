@@ -1,6 +1,5 @@
 package org.crm.crmticketingapi.service;
 
-import org.crm.crmticketingapi.dto.request.CreateAgentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.List;
 public interface AgentService {
 
     Agent createAgent(
-            CreateAgentRequest request
+            Agent agent
     );
 
     Agent getAgentById(
@@ -23,6 +22,6 @@ public interface AgentService {
 
     Agent updateAgent(
             Long id,
-            CreateAgentRequest request
+            Agent agent
     );
 }

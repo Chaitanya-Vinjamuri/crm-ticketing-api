@@ -7,8 +7,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.sql.Timestamp;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -21,9 +19,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        new Timestamp(System.currentTimeMillis()),
-                        HttpStatus.NOT_FOUND.value(),
-                        "Not Found",
+                        "failed",
                         ex.getMessage()
                 );
 
@@ -41,9 +37,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        new Timestamp(System.currentTimeMillis()),
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Bad Request",
+                        "failed",
                         ex.getMessage()
                 );
 
@@ -66,9 +60,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        new Timestamp(System.currentTimeMillis()),
-                        HttpStatus.BAD_REQUEST.value(),
-                        "Validation Failed",
+                        "failed",
                         message
                 );
 
@@ -86,9 +78,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response =
                 new ErrorResponse(
-                        new Timestamp(System.currentTimeMillis()),
-                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "Internal Server Error",
+                        "failed",
                         ex.getMessage()
                 );
 

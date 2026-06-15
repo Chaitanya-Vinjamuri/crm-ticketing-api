@@ -1,16 +1,19 @@
 package org.crm.crmticketingapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.crm.crmticketingapi.enums.IssueType;
 import org.crm.crmticketingapi.enums.Priority;
 import org.crm.crmticketingapi.enums.TicketStatus;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
 import java.sql.Timestamp;
+
 @Entity
 @Table(
         name = "tickets",
@@ -43,15 +46,16 @@ public class Ticket {
     )
     private String ticketCode;
 
-
-
     @NotBlank(message = "Title is required")
     @Size(
             min = 5,
             max = 200,
             message = "Title must be between 5 and 200 characters"
     )
-    @Column(nullable = false, length = 200)
+    @Column(
+            nullable = false,
+            length = 200
+    )
     private String title;
 
     @NotBlank(message = "Description is required")
@@ -60,15 +64,22 @@ public class Ticket {
             max = 1000,
             message = "Description must be between 10 and 1000 characters"
     )
-    @Column(nullable = false, length = 1000)
+    @Column(
+            nullable = false,
+            length = 1000
+    )
     private String description;
 
     @NotBlank(message = "Customer email is required")
     @Email(message = "Invalid customer email format")
+    @Size(
+            min = 5,
+            max = 150,
+            message = "Customer email must be between 5 and 150 characters"
+    )
     @Column(nullable = false)
     private String customerEmail;
 
-    @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketStatus status;
@@ -81,13 +92,11 @@ public class Ticket {
     @Column(nullable = false)
     private Timestamp slaDueAt;
 
-
     @NotNull(message = "Issue type is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IssueType issueType;
 
-    @NotNull(message = "Created date is required")
     @Column(nullable = false)
     private Timestamp createdAt;
 
@@ -99,5 +108,14 @@ public class Ticket {
             name = "agent_id",
             nullable = false
     )
+    @JsonIgnore
     private Agent assignedAgent;
+
+    @JsonProperty("agentId")
+    public Long getAgentId() {
+
+        return assignedAgent != null
+                ? assignedAgent.getId()
+                : null;
+    }
 }
