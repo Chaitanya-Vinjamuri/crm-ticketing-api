@@ -2,7 +2,6 @@ package org.crm.crmticketingapi.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.crm.crmticketingapi.dto.request.CreateCommentRequest;
 import org.crm.crmticketingapi.entity.Comment;
 import org.crm.crmticketingapi.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +24,14 @@ public class CommentController {
     public ResponseEntity<Comment> createComment(
             @Valid
             @RequestBody
-            CreateCommentRequest request) {
+            Comment comment) {
 
-        Comment comment =
-                commentService.createComment(request);
+        Comment savedcomment =
+                commentService.createComment(comment);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(comment);
+                .body(savedcomment);
     }
 
     @GetMapping("/{id}")
@@ -65,19 +64,19 @@ public class CommentController {
         );
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/update/{id}")
     public ResponseEntity<Comment> updateComment(
             @PathVariable
             Long id,
 
             @Valid
             @RequestBody
-            CreateCommentRequest request) {
+            Comment comment) {
 
         return ResponseEntity.ok(
                 commentService.updateComment(
                         id,
-                        request
+                        comment
                 )
         );
     }

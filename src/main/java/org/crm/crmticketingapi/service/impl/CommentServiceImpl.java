@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dao.AgentDao;
 import org.crm.crmticketingapi.dao.CommentDao;
 import org.crm.crmticketingapi.dao.TicketDao;
-import org.crm.crmticketingapi.dto.request.CreateCommentRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.entity.Comment;
 import org.crm.crmticketingapi.entity.Ticket;
@@ -45,9 +44,9 @@ public class CommentServiceImpl
 
     @Override
     public Comment createComment(
-            CreateCommentRequest request) {
+            Comment comment) {
 
-        if (request == null) {
+        if (comment == null) {
 
             throw new IllegalArgumentException(
                     "Comment request cannot be null"
@@ -56,25 +55,25 @@ public class CommentServiceImpl
 
         logger.info(
                 "Creating comment for ticket id {} by agent id {}",
-                request.getTicketId(),
-                request.getAgentId()
+                comment.getTicket().getId(),
+                comment.getAgent().getId()
         );
 
         Ticket ticket =
                 ticketDao.findById(
-                        request.getTicketId()
+                        comment.getTicket().getId()
                 );
 
         Agent agent =
                 agentDao.findById(
-                        request.getAgentId()
+                        comment.getAgent().getId()
                 );
 
         if (ticket == null) {
 
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
-                            + request.getTicketId()
+                            + comment.getTicket().getId()
             );
         }
 
@@ -82,29 +81,31 @@ public class CommentServiceImpl
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
-                            + request.getAgentId()
+                            + comment.getAgent().getId()
             );
         }
 
-        Comment comment =
-                Comment.builder()
-                        .commentCode(
-                                CodeGeneratorUtil
-                                        .generateCommentCode()
-                        )
-                        .message(
-                                request.getMessage()
-                        )
-                        .createdAt(
-                                new Timestamp(
-                                        System.currentTimeMillis()
-                                )
-                        )
-                        .ticket(ticket)
-                        .agent(agent)
-                        .build();
+        comment.setCommentCode(
+                CodeGeneratorUtil.generateCommentCode()
+        );
 
-        commentDao.save(comment);
+        comment.setCreatedAt(
+                new Timestamp(
+                        System.currentTimeMillis()
+                )
+        );
+
+        comment.setTicket(
+                ticket
+        );
+
+        comment.setAgent(
+                agent
+        );
+
+        commentDao.save(
+                comment
+        );
 
         commentCache.put(
                 comment.getId(),
@@ -222,14 +223,14 @@ public class CommentServiceImpl
     @Override
     public Comment updateComment(
             Long id,
-            CreateCommentRequest request) {
+            Comment updatedComment) {
 
         ValidationUtil.validateId(
                 id,
                 "Comment"
         );
 
-        if (request == null) {
+        if (updatedComment == null) {
 
             throw new IllegalArgumentException(
                     "Comment request cannot be null"
@@ -251,19 +252,19 @@ public class CommentServiceImpl
 
         Ticket ticket =
                 ticketDao.findById(
-                        request.getTicketId()
+                        updatedComment.getTicket().getId()
                 );
 
         Agent agent =
                 agentDao.findById(
-                        request.getAgentId()
+                        updatedComment.getAgent().getId()
                 );
 
         if (ticket == null) {
 
             throw new ResourceNotFoundException(
                     "Ticket not found with id : "
-                            + request.getTicketId()
+                            + updatedComment.getTicket().getId()
             );
         }
 
@@ -271,12 +272,12 @@ public class CommentServiceImpl
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
-                            + request.getAgentId()
+                            + updatedComment.getAgent().getId()
             );
         }
 
         comment.setMessage(
-                request.getMessage()
+                updatedComment.getMessage()
         );
 
         comment.setTicket(

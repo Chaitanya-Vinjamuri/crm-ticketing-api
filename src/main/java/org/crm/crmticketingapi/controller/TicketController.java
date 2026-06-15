@@ -3,8 +3,8 @@ package org.crm.crmticketingapi.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
-import org.crm.crmticketingapi.dto.request.UpdateTicketStatusRequest;
 import org.crm.crmticketingapi.entity.Ticket;
+import org.crm.crmticketingapi.enums.TicketStatus;
 import org.crm.crmticketingapi.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,15 +22,15 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    @PatchMapping("/{id}/status")
+    @PostMapping("/status/{id}")
     public ResponseEntity<Ticket> updateStatus(
             @PathVariable Long id,
-            @RequestBody @Valid UpdateTicketStatusRequest request) {
+            @RequestParam TicketStatus status){
 
         return ResponseEntity.ok(
                 ticketService.updateStatus(
                         id,
-                        request.getStatus()
+                        status
                 )
         );
     }
@@ -79,7 +79,7 @@ public class TicketController {
         );
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/update/{id}")
     public ResponseEntity<Ticket> updateTicket(
             @PathVariable
             Long id,

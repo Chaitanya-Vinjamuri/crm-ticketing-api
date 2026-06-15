@@ -1,6 +1,5 @@
 package org.crm.crmticketingapi.service;
 
-import org.crm.crmticketingapi.dto.request.CreateCommentRequest;
 import org.crm.crmticketingapi.entity.Comment;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.List;
 public interface CommentService {
 
     Comment createComment(
-            CreateCommentRequest request
+            Comment comment
     );
 
     Comment getCommentById(
@@ -23,6 +22,6 @@ public interface CommentService {
 
     Comment updateComment(
             Long id,
-            CreateCommentRequest request
+            Comment comment
     );
 }

@@ -54,6 +54,11 @@ public class Agent {
             unique = true,
             length = 150
     )
+    @Size(
+            min = 5,
+            max = 150,
+            message = "Email must be between 5 and 150 characters"
+    )
     private String email;
 
     @NotNull(message = "Department is required")
@@ -65,11 +70,9 @@ public class Agent {
     @Column(nullable = false)
     private Boolean active;
 
-    @NotNull(message = "Assigned ticket count is required")
     @Column(nullable = false)
     private Integer assignedTicketCount;
 
-    @NotNull(message = "Created date is required")
     @Column(nullable = false)
     private Timestamp createdAt;
 }
