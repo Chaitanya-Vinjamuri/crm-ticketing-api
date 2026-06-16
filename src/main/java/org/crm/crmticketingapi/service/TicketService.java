@@ -1,6 +1,5 @@
 package org.crm.crmticketingapi.service;
 
-import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
 import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
 
@@ -14,7 +13,7 @@ public interface TicketService {
     );
 
     Ticket createTicket(
-            CreateTicketRequest request
+            Ticket ticket
     );
 
     Ticket getTicketById(
@@ -29,6 +28,6 @@ public interface TicketService {
 
     Ticket updateTicket(
             Long id,
-            CreateTicketRequest request
+            Ticket ticket
     );
 }

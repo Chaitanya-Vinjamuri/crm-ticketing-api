@@ -2,7 +2,6 @@ package org.crm.crmticketingapi.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
 import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
 import org.crm.crmticketingapi.service.TicketService;
@@ -39,14 +38,16 @@ public class TicketController {
     public ResponseEntity<Ticket> createTicket(
             @Valid
             @RequestBody
-            CreateTicketRequest request) {
+            Ticket ticket) {
 
-        Ticket ticket =
-                ticketService.createTicket(request);
+        Ticket savedTicket =
+                ticketService.createTicket(
+                        ticket
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ticket);
+                .body(savedTicket);
     }
 
     @GetMapping("/{id}")
@@ -86,12 +87,12 @@ public class TicketController {
 
             @Valid
             @RequestBody
-            CreateTicketRequest request) {
+            Ticket ticket) {
 
         return ResponseEntity.ok(
                 ticketService.updateTicket(
                         id,
-                        request
+                        ticket
                 )
         );
     }

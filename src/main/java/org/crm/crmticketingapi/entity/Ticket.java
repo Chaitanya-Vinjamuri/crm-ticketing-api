@@ -102,7 +102,6 @@ public class Ticket {
 
     private Timestamp resolvedAt;
 
-    @NotNull(message = "Assigned agent is required")
     @ManyToOne
     @JoinColumn(
             name = "agent_id",
@@ -111,11 +110,18 @@ public class Ticket {
     @JsonIgnore
     private Agent assignedAgent;
 
+    @Transient
+    @NotNull(message = "Agent id is required")
+    private Long agentId;
+
     @JsonProperty("agentId")
     public Long getAgentId() {
 
-        return assignedAgent != null
-                ? assignedAgent.getId()
-                : null;
+        if (assignedAgent != null) {
+
+            return assignedAgent.getId();
+        }
+
+        return agentId;
     }
 }

@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.crm.crmticketingapi.cache.LruCache;
 import org.crm.crmticketingapi.dao.AgentDao;
 import org.crm.crmticketingapi.dao.TicketDao;
-import org.crm.crmticketingapi.dto.request.CreateTicketRequest;
 import org.crm.crmticketingapi.entity.Agent;
 import org.crm.crmticketingapi.entity.Ticket;
 import org.crm.crmticketingapi.enums.TicketStatus;
@@ -106,9 +105,9 @@ public class TicketServiceImpl
 
     @Override
     public Ticket createTicket(
-            CreateTicketRequest request) {
+            Ticket ticket) {
 
-        if (request == null) {
+        if (ticket == null) {
 
             throw new IllegalArgumentException(
                     "Ticket request cannot be null"
@@ -122,7 +121,7 @@ public class TicketServiceImpl
 
         Timestamp slaDueAt;
 
-        switch (request.getPriority()) {
+        switch (ticket.getPriority()) {
 
             case LOW:
                 slaDueAt =
@@ -154,46 +153,52 @@ public class TicketServiceImpl
 
         Agent agent =
                 agentDao.findById(
-                        request.getAgentId()
+                        ticket.getAgentId()
                 );
 
         if (agent == null) {
 
             logger.error(
                     "Agent not found with id {}",
-                    request.getAgentId()
+                    ticket.getAgentId()
             );
 
             throw new ResourceNotFoundException(
                     "Agent not found with id : "
-                            + request.getAgentId()
+                            + ticket.getAgentId()
             );
         }
 
-        Ticket ticket =
-                Ticket.builder()
-                        .ticketCode(
-                                CodeGeneratorUtil
-                                        .generateTicketCode()
-                        )
-                        .title(request.getTitle())
-                        .description(request.getDescription())
-                        .customerEmail(request.getCustomerEmail())
-                        .priority(request.getPriority())
-                        .issueType(request.getIssueType())
-                        .status(TicketStatus.OPEN)
-                        .createdAt(now)
-                        .slaDueAt(slaDueAt)
-                        .assignedAgent(agent)
-                        .build();
+        ticket.setTicketCode(
+                CodeGeneratorUtil.generateTicketCode()
+        );
+
+        ticket.setStatus(
+                TicketStatus.OPEN
+        );
+
+        ticket.setCreatedAt(
+                now
+        );
+
+        ticket.setSlaDueAt(
+                slaDueAt
+        );
+
+        ticket.setAssignedAgent(
+                agent
+        );
 
         try {
 
-            System.out.println("STEP-1 BEFORE SAVE");
+            logger.info(
+                    "Creating ticket for agent id {}",
+                    ticket.getAgentId()
+            );
 
-            ticketDao.save(ticket);
-
-            System.out.println("STEP-2 AFTER SAVE");
+            ticketDao.save(
+                    ticket
+            );
 
             historyEventProducer.publish(
                     HistoryEvent.builder()
@@ -202,8 +207,6 @@ public class TicketServiceImpl
                             .action("CREATE")
                             .build()
             );
-
-            System.out.println("STEP-3 AFTER PUBLISH");
 
             lruCache.put(
                     ticket.getId(),
@@ -214,7 +217,9 @@ public class TicketServiceImpl
                     agent.getAssignedTicketCount() + 1
             );
 
-            agentDao.update(agent);
+            agentDao.update(
+                    agent
+            );
 
             logger.info(
                     "Ticket created successfully with id {}",
@@ -227,7 +232,7 @@ public class TicketServiceImpl
 
             logger.error(
                     "Failed to create ticket for agent id {}",
-                    request.getAgentId(),
+                    ticket.getAgentId(),
                     ex
             );
 
@@ -359,7 +364,7 @@ public class TicketServiceImpl
     @Override
     public Ticket updateTicket(
             Long id,
-            CreateTicketRequest request) {
+            Ticket request) {
 
         ValidationUtil.validateId(
                 id,
@@ -379,7 +384,9 @@ public class TicketServiceImpl
         );
 
         Ticket ticket =
-                ticketDao.findById(id);
+                ticketDao.findById(
+                        id
+                );
 
         if (ticket == null) {
 
@@ -438,7 +445,9 @@ public class TicketServiceImpl
                     agent
             );
 
-            ticketDao.update(ticket);
+            ticketDao.update(
+                    ticket
+            );
 
             historyEventProducer.publish(
                     HistoryEvent.builder()
